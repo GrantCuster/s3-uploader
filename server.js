@@ -177,7 +177,7 @@ app.get("/api/list-objects", async (req, res) => {
 const port = process.env.NODE_ENV === "production" ? 5050 : 3000;
 ViteExpress.config({
   inlineViteConfig: {
-    base: "/uploader",
+    base: "/",
   },
 });
 ViteExpress.listen(app, port, () => console.log("Server is listening..."));

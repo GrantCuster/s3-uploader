@@ -22,6 +22,7 @@ const UploadImage = ({
   setBump: Dispatch<SetStateAction<number>>;
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +41,8 @@ const UploadImage = ({
     formData.append("image", selectedFile);
 
     try {
-      await axios.post("http://localhost:3000/api/upload", formData, {
+    setIsUploading(true);
+      await axios.post("api/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -52,13 +54,14 @@ const UploadImage = ({
       // @ts-ignore
       setUploadStatus(`Error uploading file: ${error.message}`);
     }
+    setIsUploading(false);
   };
 
   return (
     <div>
       <h1>Upload Image</h1>
       <input type="file" accept="image/*" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
+      {!isUploading && <button onClick={handleUpload}>Upload</button>}
       {uploadStatus && (
         <>
           <p>{uploadStatus}</p>
@@ -84,7 +87,7 @@ const BucketContents = ({ bump }: { bump: number }) => {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await fetch("/api/list-objects");
+        const response = await fetch("api/list-objects");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
