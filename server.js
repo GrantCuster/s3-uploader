@@ -7,11 +7,11 @@ const path = require("path");
 require("dotenv").config();
 const ViteExpress = require("vite-express");
 
+// let baseUrl = process.env.NODE_ENV === "production" ? "/uploader" : "";
+
 const app = express();
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb" }));
-
-app.get("/message", (_, res) => res.send("Hello from express!"));
 
 // Set up AWS S3
 const s3 = new AWS.S3({
@@ -172,5 +172,5 @@ app.get("/api/list-objects", async (req, res) => {
   }
 });
 
-const port = process.env.NODE_ENV === "production" ? 8080 : 3000;
+const port = process.env.NODE_ENV === "production" ? 5050 : 3000;
 ViteExpress.listen(app, port, () => console.log("Server is listening..."));
