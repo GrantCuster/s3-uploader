@@ -11,10 +11,6 @@ console.log("process.env.NODE_ENV", process.env.NODE_ENV);
 
 // let baseUrl = process.env.NODE_ENV === "production" ? "/uploader" : "";
 
-ViteExpress.config({
-  base: process.env.NODE_ENV === "production" ? "/uploader" : "",
-})
-
 const app = express();
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb" }));
@@ -40,10 +36,10 @@ const formatDate = () => {
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, "uploads/");
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     const formattedDate = formatDate();
     cb(null, formattedDate + path.extname(file.originalname)); // Append the file extension
   },
@@ -178,5 +174,10 @@ app.get("/api/list-objects", async (req, res) => {
   }
 });
 
-const port = process.env.NODE_ENV === "production" ? 8080 : 3000;
+const port = process.env.NODE_ENV === "production" ? 5050 : 3000;
+ViteExpress.config({
+  inlineViteConfig: {
+    base: "/uploader",
+  },
+});
 ViteExpress.listen(app, port, () => console.log("Server is listening..."));
