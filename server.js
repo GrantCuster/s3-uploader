@@ -7,7 +7,13 @@ const path = require("path");
 require("dotenv").config();
 const ViteExpress = require("vite-express");
 
+console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+
 // let baseUrl = process.env.NODE_ENV === "production" ? "/uploader" : "";
+
+ViteExpress.config({
+  base: process.env.NODE_ENV === "production" ? "/uploader" : "",
+})
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -172,5 +178,5 @@ app.get("/api/list-objects", async (req, res) => {
   }
 });
 
-const port = process.env.NODE_ENV === "production" ? 5050 : 3000;
+const port = process.env.NODE_ENV === "production" ? 8080 : 3000;
 ViteExpress.listen(app, port, () => console.log("Server is listening..."));
