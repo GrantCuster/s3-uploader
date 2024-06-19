@@ -9,8 +9,6 @@ const ViteExpress = require("vite-express");
 
 console.log("process.env.NODE_ENV", process.env.NODE_ENV);
 
-// let baseUrl = process.env.NODE_ENV === "production" ? "/uploader" : "";
-
 const app = express();
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb" }));
@@ -60,7 +58,7 @@ const resizeImage = (inputPath, outputDir, callback) => {
   const smallPath = path.join(outputDir, `${fileName}-${smallSize}.jpg`);
   const largePath = path.join(outputDir, `${fileName}-${largeSize}.jpg`);
 
-  // Resize to small (512px)
+  // Resize to small (800px)
   sharp(inputPath)
     .resize(smallSize, smallSize, {
       fit: "inside",
@@ -71,7 +69,7 @@ const resizeImage = (inputPath, outputDir, callback) => {
         return callback(err);
       }
 
-      // Resize to large (1600px)
+      // Resize to large (2000px)
       sharp(inputPath)
         .resize(largeSize, largeSize, {
           fit: "inside",
@@ -90,14 +88,14 @@ const resizeImage = (inputPath, outputDir, callback) => {
     });
 };
 
-const uploadToS3 = (filePath, key, callback) => {
+const uploadToS3 = (filePath, key, contentType, callback) => {
   const fileContent = fs.readFileSync(filePath);
 
   const params = {
     Bucket: process.env.S3_BUCKET_NAME,
     Key: key,
     Body: fileContent,
-    ContentType: "image/jpeg",
+    ContentType: contentType,
   };
 
   s3.upload(params, (err, data) => {
@@ -108,7 +106,7 @@ const uploadToS3 = (filePath, key, callback) => {
   });
 };
 
-app.post("/api/upload", upload.single("image"), (req, res) => {
+app.post("/api/upload/image", upload.single("image"), (req, res) => {
   const file = req.file;
   if (!file) {
     return res.status(400).send("No file uploaded.");
@@ -125,7 +123,7 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
     const fileName = path.basename(file.path, path.extname(file.path));
 
     // Upload large version
-    uploadToS3(large, `${fileName}-${largeSize}.jpg`, (err, smallLocation) => {
+    uploadToS3(large, `${fileName}-${largeSize}.jpg`, "image/jpeg", (err, largeLocation) => {
       if (err) {
         console.error("Error uploading large image:", err);
         return res.status(500).send("Error uploading large image.");
@@ -135,7 +133,8 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
       uploadToS3(
         small,
         `${fileName}-${smallSize}.jpg`,
-        (err, largeLocation) => {
+        "image/jpeg",
+        (err, smallLocation) => {
           if (err) {
             console.error("Error uploading small image:", err);
             return res.status(500).send("Error uploading small image.");
@@ -153,6 +152,56 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
           });
         },
       );
+    });
+  });
+});
+
+app.post("/api/upload/video", upload.single("video"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const fileName = path.basename(file.path, path.extname(file.path));
+  const key = `${fileName}.mp4`;
+
+  uploadToS3(file.path, key, "video/mp4", (err, location) => {
+    if (err) {
+      console.error("Error uploading video:", err);
+      return res.status(500).send("Error uploading video.");
+    }
+
+    // Clean up local file
+    fs.unlinkSync(file.path);
+
+    res.send({
+      message: "Video uploaded successfully",
+      videoUrl: location,
+    });
+  });
+});
+
+app.post("/api/upload/audio", upload.single("audio"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const fileName = path.basename(file.path, path.extname(file.path));
+  const key = `${fileName}.mp3`;
+
+  uploadToS3(file.path, key, "audio/mpeg", (err, location) => {
+    if (err) {
+      console.error("Error uploading audio:", err);
+      return res.status(500).send("Error uploading audio.");
+    }
+
+    // Clean up local file
+    fs.unlinkSync(file.path);
+
+    res.send({
+      message: "Audio uploaded successfully",
+      audioUrl: location,
     });
   });
 });

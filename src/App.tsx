@@ -11,6 +11,8 @@ function App() {
       }}
     >
       <UploadImage setBump={setBump} />
+      <UploadVideo setBump={setBump} />
+      <UploadAudio setBump={setBump} />
       <BucketContents bump={bump} />
     </div>
   );
@@ -41,14 +43,14 @@ const UploadImage = ({
     formData.append("image", selectedFile);
 
     try {
-    setIsUploading(true);
-      await axios.post("api/upload", formData, {
+      setIsUploading(true);
+      await axios.post("api/upload/image", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      setUploadStatus(`File uploaded successfully.`);
+      setUploadStatus("File uploaded successfully.");
       setBump((prev) => prev + 1);
     } catch (error) {
       // @ts-ignore
@@ -70,6 +72,116 @@ const UploadImage = ({
     </div>
   );
 };
+
+const UploadVideo = ({
+  setBump,
+}: {
+  setBump: Dispatch<SetStateAction<number>>;
+}) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadStatus("No file selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("video", selectedFile);
+
+    try {
+      setIsUploading(true);
+      await axios.post("api/upload/video", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setUploadStatus("Video uploaded successfully.");
+      setBump((prev) => prev + 1);
+    } catch (error) {
+      // @ts-ignore
+      setUploadStatus(`Error uploading video: ${error.message}`);
+    }
+    setIsUploading(false);
+  };
+
+  return (
+    <div>
+      <h1>Upload Video</h1>
+      <input type="file" accept="video/mp4" onChange={handleFileChange} />
+      {!isUploading && <button onClick={handleUpload}>Upload</button>}
+      {uploadStatus && (
+        <>
+          <p>{uploadStatus}</p>
+        </>
+      )}
+    </div>
+  );
+};
+
+const UploadAudio = ({
+  setBump,
+}: {
+  setBump: Dispatch<SetStateAction<number>>;
+}) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadStatus("No file selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("audio", selectedFile);
+
+    try {
+      setIsUploading(true);
+      await axios.post("api/upload/audio", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setUploadStatus("Audio uploaded successfully.");
+      setBump((prev) => prev + 1);
+    } catch (error) {
+      // @ts-ignore
+      setUploadStatus(`Error uploading audio: ${error.message}`);
+    }
+    setIsUploading(false);
+  };
+
+  return (
+    <div>
+      <h1>Upload Audio</h1>
+      <input type="file" accept="audio/*" onChange={handleFileChange} />
+      {!isUploading && <button onClick={handleUpload}>Upload</button>}
+      {uploadStatus && (
+        <>
+          <p>{uploadStatus}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return "0 Bytes";
@@ -105,7 +217,7 @@ const BucketContents = ({ bump }: { bump: number }) => {
     <div>
       <h1>Bucket Contents</h1>
       <div>
-        {files.slice(0,20).map((file, index) => (
+        {files.slice(0, 20).map((file, index) => (
           <div
             key={index}
             style={{
