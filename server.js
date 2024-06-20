@@ -34,10 +34,10 @@ const formatDate = () => {
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function(req, file, cb) {
     cb(null, "uploads/");
   },
-  filename: function (req, file, cb) {
+  filename: function(req, file, cb) {
     const formattedDate = formatDate();
     cb(null, formattedDate + path.extname(file.originalname)); // Append the file extension
   },
@@ -123,35 +123,65 @@ app.post("/api/upload/image", upload.single("image"), (req, res) => {
     const fileName = path.basename(file.path, path.extname(file.path));
 
     // Upload large version
-    uploadToS3(large, `${fileName}-${largeSize}.jpg`, "image/jpeg", (err, largeLocation) => {
-      if (err) {
-        console.error("Error uploading large image:", err);
-        return res.status(500).send("Error uploading large image.");
-      }
+    uploadToS3(
+      large,
+      `${fileName}-${largeSize}.jpg`,
+      "image/jpeg",
+      (err, largeLocation) => {
+        if (err) {
+          console.error("Error uploading large image:", err);
+          return res.status(500).send("Error uploading large image.");
+        }
 
-      // Upload small version
-      uploadToS3(
-        small,
-        `${fileName}-${smallSize}.jpg`,
-        "image/jpeg",
-        (err, smallLocation) => {
-          if (err) {
-            console.error("Error uploading small image:", err);
-            return res.status(500).send("Error uploading small image.");
-          }
+        // Upload small version
+        uploadToS3(
+          small,
+          `${fileName}-${smallSize}.jpg`,
+          "image/jpeg",
+          (err, smallLocation) => {
+            if (err) {
+              console.error("Error uploading small image:", err);
+              return res.status(500).send("Error uploading small image.");
+            }
 
-          // Clean up local files
-          fs.unlinkSync(file.path);
-          fs.unlinkSync(small);
-          fs.unlinkSync(large);
+            // Clean up local files
+            fs.unlinkSync(file.path);
+            fs.unlinkSync(small);
+            fs.unlinkSync(large);
 
-          res.send({
-            message: "Files uploaded successfully",
-            smallImageUrl: smallLocation,
-            largeImageUrl: largeLocation,
-          });
-        },
-      );
+            res.send({
+              message: "Files uploaded successfully",
+              smallImageUrl: smallLocation,
+              largeImageUrl: largeLocation,
+            });
+          },
+        );
+      },
+    );
+  });
+});
+
+app.post("/api/upload/gif", upload.single("gif"), (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const fileName = path.basename(file.path, path.extname(file.path));
+  const key = `${fileName}.gif`;
+
+  uploadToS3(file.path, key, "image/gif", (err, location) => {
+    if (err) {
+      console.error("Error uploading gif:", err);
+      return res.status(500).send("Error uploading gif.");
+    }
+
+    // Clean up local file
+    fs.unlinkSync(file.path);
+
+    res.send({
+      message: "Gif uploaded successfully",
+      gifUrl: location,
     });
   });
 });

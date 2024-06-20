@@ -11,6 +11,7 @@ function App() {
       }}
     >
       <UploadImage setBump={setBump} />
+      <UploadGif setBump={setBump} />
       <UploadVideo setBump={setBump} />
       <UploadAudio setBump={setBump} />
       <BucketContents bump={bump} />
@@ -72,6 +73,61 @@ const UploadImage = ({
     </div>
   );
 };
+
+const UploadGif = ({
+  setBump,
+}: {
+  setBump: Dispatch<SetStateAction<number>>;
+}) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setUploadStatus("No file selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("gif", selectedFile);
+
+    try {
+      setIsUploading(true);
+      await axios.post("api/upload/gif", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setUploadStatus("Gif uploaded successfully.");
+      setBump((prev) => prev + 1);
+    } catch (error) {
+      // @ts-ignore
+      setUploadStatus(`Error uploading gif: ${error.message}`);
+    }
+    setIsUploading(false);
+  };
+
+  return (
+    <div>
+      <h1>Upload Gif</h1>
+      <input type="file" accept="image/gif" onChange={handleFileChange} />
+      {!isUploading && <button onClick={handleUpload}>Upload</button>}
+      {uploadStatus && (
+        <>
+          <p>{uploadStatus}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 const UploadVideo = ({
   setBump,
